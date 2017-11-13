@@ -1,0 +1,81 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The admin user of the SQL Server"
+      }
+    },
+    "sqlAdministratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password of the admin user of the SQL Server"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the database"
+      }
+    },
+    "sqlserverName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SQL Server"
+      }
+    },
+    "virtualNetworkSubnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of the virtual network subnet with service end point enabled"
+      }
+    }
+  },
+  "variables": {
+    "SQLapiVersion": "2015-05-01-preview",
+    "databaseSku": "Basic"
+  },
+  "resources": [
+    {
+      "name": "[parameters('sqlserverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('SQLapiVersion')]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "[parameters('databaseName')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "[variables('SQLapiVersion')]",
+          "dependsOn": [
+            "[parameters('sqlserverName')]"
+          ],
+          "properties": {
+            "edition": "[variables('databaseSku')]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
+          }
+        },
+        {
+          "name": "newVnetRule2",
+          "type": "virtualNetworkRules",
+          "apiVersion": "2015-05-01-preview",
+          "dependsOn": [
+            "[parameters('sqlserverName')]"
+          ],
+          "properties": {
+            "virtualNetworkSubnetId": "[parameters('virtualNetworkSubnetId')]"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {   
+  }
+}
